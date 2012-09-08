@@ -24,14 +24,19 @@ class Table extends View
 	{
 		parent::__construct($db, $name);
 
-
-		$this->idcol = '';
-
-
 		$params = array(
 			'database' => $db->name(),
 			'table' => $name,
 		);
+
+		$this->pk_column = $db
+			->query('SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE'
+				. ' WHERE TABLE_SCHEMA = :database AND TABLE_NAME = :table'
+				. " AND CONSTRAINT_NAME = 'PRIMARY'")
+			->set_params($params)
+			->fetch_value();
+
+
 		$fetcher = function (\mysqli_result $result) {
 			if (!$result) {
 				return array();
@@ -46,17 +51,15 @@ class Table extends View
 		$this->referenced_by = $db->query(
 			'SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME'
 			. ' FROM information_schema.KEY_COLUMN_USAGE'
-			. ' WHERE TABLE_SCHEMA = :database AND REFERENCED_TABLE_SCHEMA = :database AND REFERENCED_TABLE_NAME = :table'
+			. ' WHERE TABLE_SCHEMA = :database AND REFERENCED_TABLE_SCHEMA = :database'
+			. ' AND REFERENCED_TABLE_NAME = :table'
 		)->set_params($params)->fetch_custom($fetcher, MYSQLI_USE_RESULT);
-		echo '
-';
-		var_dump($this->referenced_by);
 	}
 
 	public function fetch_tree($grpcol, $idcol = null)
 	{
 		if (!$idcol) {
-			$idcol = $this->idcol;
+			$idcol = $this->pk_column;
 		}
 		return parent::fetch_tree($grpcol, $idcol);
 	}
@@ -65,36 +68,36 @@ class Table extends View
 	 * Read references from a row to other rows.
 	 * @param array $subject
 	 * @param string $table
-	 * @param string $property
+	 * @param string $column
 	 */
-	public function references($subject, $table, $property = null)
+	public function references($subject, $table, $column = null)
 	{
-		return $this->db->table($table)->referenced_by($subject, $this->name, $property);
+		return $this->db->table($table)->referenced_by($subject, $this->name, $column);
 	}
 	/**
 	 * Read references to a row from other rows.
 	 * @param array $subject
 	 * @param string $table
-	 * @param string $property
+	 * @param string $column
 	 * @throws DatabaseException
 	 */
-	public function referenced_by($subject, $table, $property = null)
+	public function referenced_by($subject, $table, $column = null)
 	{
 		if (!isset($this->referenced_by[$table])) {
 			throw new DatabaseException('Table not referenced');
 		}
 		$references = $this->referenced_by[$table];
-		if (!$property) {
+		if (!$column) {
 			if (count($references) > 1) {
 				throw new DatabaseException('Ambiguous property');
 			}
-			$property = first(array_keys($references));
-		} elseif (!isset($references[$property])) {
+			$column = first(array_keys($references));
+		} elseif (!isset($references[$column])) {
 			throw new DatabaseException('Property not found');
 		}
 
 		return $this->db->table($table)->filter(array(
-			$property => $subject[$references[$property]],
+			$column => $subject[$references[$column]],
 		));
 	}
 }

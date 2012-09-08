@@ -58,7 +58,6 @@ class Query
 		} else {
 			$sql = $this->query . " LIMIT {$this->limit['offset']}, {$this->limit['limit']}";
 		}
-		echo $sql, "\r\n";
 		return $sql;
 	}
 
@@ -147,8 +146,13 @@ class Query
 			while ($row = $rs->fetch_assoc()) {
 				$arr[$row[$idcol]] = $row;
 			}
-		} else {
+		} elseif (method_exists($rs, 'fetch_all')) {
+			// Needs PHP 5.3
 			$arr = $rs->fetch_all(MYSQLI_ASSOC);
+		} else {
+			while ($row = $rs->fetch_assoc()) {
+				$arr[] = $row;
+			}
 		}
 
 		$rs->free();
@@ -193,7 +197,7 @@ class Query
 	public function fetch_row($sql)
 	{
 		$this->set_limit(1);
-		$rs = $this->db->connection()->query($this, MYSQLI_STORE_RESULT);
+		$rs = $this->db->connection()->query($this, MYSQLI_USE_RESULT);
 		if ($rs && $row = $rs->fetch_assoc()) {
 			$rs->free();
 			return $row;
@@ -207,7 +211,7 @@ class Query
 	public function fetch_value()
 	{
 		$this->set_limit(1);
-		$rs = $this->db->connection()->query($this, MYSQLI_STORE_RESULT);
+		$rs = $this->db->connection()->query($this, MYSQLI_USE_RESULT);
 		if ($rs && $row = $rs->fetch_row()) {
 			$rs->free();
 			return $row[0];
