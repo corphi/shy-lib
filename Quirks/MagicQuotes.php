@@ -4,14 +4,26 @@ namespace Shy\Quirks;
 
 
 
+/**
+ * A quirk to automagically remove Magic Quotes.
+ * Query whether it was necessary by calling self::needed().
+ * 
+ * @author Philipp Cordes
+ * @license GNU General Public License, version 3
+ */
 class MagicQuotes
 {
+	public function __construct()
+	{
+		self::needed();
+	}
+
 	/**
 	 * Removes Magic Quotes; returns whether it was necessary.
-	 * @link http://php.net/security.magicquotes.disabling#example-332 Source and inspiration
+	 * @link http://php.net/security.magicquotes.disabling#example-333 Source and inspiration
 	 * @return boolean
 	 */
-	public static function quirk()
+	public static function needed()
 	{
 		static $retval = null;
 		if ($retval !== null) {
@@ -37,5 +49,3 @@ class MagicQuotes
 		return $retval = true;
 	}
 }
-
-MagicQuotes::quirk();

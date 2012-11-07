@@ -4,12 +4,17 @@ namespace Shy\Quirks;
 
 
 
+/**
+ * A quirk around lazy server timezone settings.
+ * 
+ * It makes sure that the default timezone is set appropriately.
+ * 
+ * @author Philipp Cordes
+ * @license GNU General Public License, version 3
+ */
 class DateDefaultTimezone
 {
-	/**
-	 * Make sure that date/time settings are valid.
-	 */
-	public static function quirk()
+	public function __construct()
 	{
 		$error_reporting = error_reporting(0);
 		// Awesome semantics!
@@ -17,5 +22,3 @@ class DateDefaultTimezone
 		error_reporting($error_reporting);
 	}
 }
-
-DateDefaultTimezone::quirk();
