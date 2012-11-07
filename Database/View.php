@@ -51,9 +51,14 @@ class View extends Query
 
 		$sql = $this->query;
 		foreach ($where as $column => $value) {
-			$where[$column] = $this->db->escape_column($column) . ' = ' . $this->db->escape_value($value);
+			if (is_array($value) && $value) {
+				array_walk(&$value, array($this->db, 'escape_value'));
+				$where[$column] = $this->db->escape_column($column) . ' IN (' . implode(', ', $value) . ')';
+			} else {
+				$where[$column] = $this->db->escape_column($column) . ' = ' . $this->db->escape_value($value);
+			}
 		}
-		$sql .= ' WHERE' . implode(' AND ', $where);
+		$sql .= ' WHERE ' . implode(' AND ', $where);
 
 		return $this->db->query($sql);
 	}
