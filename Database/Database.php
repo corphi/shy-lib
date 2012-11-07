@@ -102,12 +102,13 @@ class Database
 	/**
 	 * Query the database.
 	 * @param string $query
-	 * @param int $resultmode
-	 * @return Query|boolean
+	 * @param array $params
+	 * @return Query
 	 */
-	public function query($query)
+	public function query($query, array $params = array())
 	{
-		return new Query($this, $query);
+		$q = new Query($this, $query);
+		return $q->set_params($params);
 	}
 
 	/**
@@ -117,14 +118,15 @@ class Database
 	/**
 	 * Request a table from the database. Caches used tables.
 	 * @param string $name
+	 * @param array $filter
 	 * @return Table
 	 */
-	public function table($name)
+	public function table($name, array $filter = array())
 	{
-		if (isset($this->tables[$name])) {
-			return $this->tables[$name];
+		if (!isset($this->tables[$name])) {
+			$this->tables[$name] = $this->read_table($name);
 		}
-		return $this->tables[$name] = $this->read_table($name);
+		return $this->tables[$name]->filter($filter); 
 	}
 	/**
 	 * Read table metadata from the database.
@@ -167,8 +169,11 @@ class Database
 	 */
 	public function escape_value($value)
 	{
-		if (\Shy\ctype_digit_ex($value)) {
-			return strval($value);
+		if ($value === null) {
+			return 'NULL';
+		}
+		if (is_int($str) || is_float($str) || ctype_digit((string) $str)) {
+			return (string) $value;
 		}
 		return "'" . $this->conn->escape_string($value) . "'";
 	}

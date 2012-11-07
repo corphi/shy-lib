@@ -63,7 +63,6 @@ class Query
 
 	/**
 	 * Explain this query.
-	 * 
 	 * @return array
 	 */
 	public function explain()
@@ -163,7 +162,7 @@ class Query
 	 * The array can be indexed by values from the column $idcol.
 	 * @param $col string
 	 * @param $idcol string
-	 * @return mixed
+	 * @return array|boolean
 	 */
 	public function fetch_column($col = null, $idcol = null)
 	{
@@ -191,10 +190,9 @@ class Query
 	}
 	/**
 	 * Returns the first line from the result of the given SQL command as associative array; or false.
-	 * @param $sql string
-	 * @return array|false
+	 * @return array|boolean
 	 */
-	public function fetch_row($sql)
+	public function fetch_row()
 	{
 		$this->set_limit(1);
 		$rs = $this->db->connection()->query($this, MYSQLI_USE_RESULT);

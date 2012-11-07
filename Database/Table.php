@@ -84,20 +84,30 @@ class Table extends View
 	public function referenced_by($subject, $table, $column = null)
 	{
 		if (!isset($this->referenced_by[$table])) {
-			throw new DatabaseException('Table not referenced');
+			throw new DatabaseException(sprintf('Table “%s” not referenced from table “%s”', $this->name, $table));
 		}
 		$references = $this->referenced_by[$table];
 		if (!$column) {
 			if (count($references) > 1) {
-				throw new DatabaseException('Ambiguous property');
+				throw new DatabaseException(sprintf('Ambiguous refererences from table “%s” to “%s”', $table, $this->name));
 			}
 			$column = first(array_keys($references));
 		} elseif (!isset($references[$column])) {
-			throw new DatabaseException('Property not found');
+			throw new DatabaseException(sprintf('Column “%s” not found in table “%s”', $column, $this->name));
 		}
 
 		return $this->db->table($table)->filter(array(
 			$column => $subject[$references[$column]],
 		));
+	}
+
+	public function by_id($id)
+	{
+		return $this->db
+			->query("SELECT * FROM " . $this->escaped_name . " WHERE " . $this->db->escape_column($this->pk_column) . " = :id")
+			->set_params(array('id' => $id))
+			->fetch_row();
+
+		$row = new Row($this, array($this->pk_column => $id));
 	}
 }

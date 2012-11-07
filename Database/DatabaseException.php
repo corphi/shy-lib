@@ -2,8 +2,6 @@
 
 namespace Shy\Database;
 
-use \Exception;
-
 
 
 /**
@@ -12,6 +10,6 @@ use \Exception;
  * @author Philipp Cordes
  * @license GNU General Public License, version 3
  */
-class DatabaseException extends Exception
+class DatabaseException extends \Exception
 {
 }
