@@ -1,0 +1,78 @@
+h1. Shy Library
+
+This library is my effort to bundle all helper methods in one place for easy
+integration into my PHP projects. They are usually designed for edge purposes,
+but will probably fit other uses.
+I called it Shy because it should behave shily. It’s small. It’s fast.
+
+I publish the components as they mature.
+
+
+h2. Database
+
+The base class Database wraps around a mysqli object and
+only exports useful functionality. You can use it like this:
+
+bc. use \Shy\Database\Database;
+// …
+$db = new Database(array(
+    'host' => 'my.db-server.tld',
+    'user' => 'me',
+    'password' => 'topsecret',
+    'database' => 'my_database',
+));
+
+You can pass the credentials in the first parameter as an array; otherwise they
+will be read from your configuration.
+
+What about queries?
+
+bc. $num_clients = $db->query('SELECT COUNT(*) FROM clients')->fetch_value();
+
+That was easy. If you don’t need the result, you can execute queries directly:
+
+bc. $success = $db->execute('DROP TABLE clients');
+
+
+h3. Table Abstraction
+
+It also features table abstraction that is directly read from the database.
+When you serialize the Database object, this metadata is serialized along with
+it. Thus, you can (and should) cache this data by using serializiation.
+You can force reading all tables when you create the object:
+
+bc. $db = new Database(array(), true);
+
+Read the product with primary key @12@ and its category from the database:
+
+bc. $product = $db->table('products')->by_id(12);
+$category = $product->references('categories')->fetch_row();
+
+
+h2. Session
+
+The session class is documented inside its file. Basic usage is:
+
+bc. class MySession extends \Shy\Session\AbstractSession
+{
+public function __construct()
+{
+// Set up AbstractSession
+}
+}
+
+bc. $session = MySession::get_instance();
+
+The base class provides everything that you should want, such as secure settings,
+automatic pickup, IP locking and deletion of session cookies.
+
+
+h2. Forms
+
+Yet to come.
+
+
+h2. Miscellaneous
+
+Some utilities reside in @util.inc@. They are not sorted and mostly consist of
+little macros.
