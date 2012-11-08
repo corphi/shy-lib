@@ -462,3 +462,17 @@ function substring($string, $start, $end)
 {
 	return substr($string, $start, $end - $start);
 }
+
+/**
+ * Flatten an array.
+ * @param array $arr
+ * @return array
+ */
+function array_flatten(array $arr)
+{
+	$flat = array();
+	array_walk_recursive($arr, function ($v) use (&$flat) {
+		$flat[] = $v;
+	});
+	return $flat;
+}
