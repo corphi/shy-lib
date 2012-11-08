@@ -5,7 +5,7 @@ namespace Shy\Database;
 
 
 /**
- * A view from the database. Not a table but quite.
+ * A view from the database. Not a quite table but close.
  * 
  * @author Philipp Cordes
  * @license GNU General Public License, version 3
@@ -52,7 +52,7 @@ class View extends Query
 		$sql = $this->query;
 		foreach ($where as $column => $value) {
 			if (is_array($value) && $value) {
-				array_walk(&$value, array($this->db, 'escape_value'));
+				array_walk($value, array($this->db, 'escape_value'));
 				$where[$column] = $this->db->escape_column($column) . ' IN (' . implode(', ', $value) . ')';
 			} else {
 				$where[$column] = $this->db->escape_column($column) . ' = ' . $this->db->escape_value($value);
