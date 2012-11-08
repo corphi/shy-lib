@@ -7,21 +7,21 @@ namespace Shy\Session;
 /**
  * A little help for your session. Will continue a running session
  * automatically, but doesn’t start them on its own if you don’t want it to.
- * It will replace $_SESSION; no change to other code is needed.
  *
  * Features:
- *   - Lock the session to the current IP address (\Shy\Session::$lock_ip = true)
- *   - Secure your settings by calling \Shy\Session::apply_secure_settings().
+ *   - Lock the session to the current IP address (AbstractSession::$lock_ip = true)
+ *   - Secure your settings by calling AbstractSession::apply_secure_settings().
  *     (http cookies only, and secure iff you use https)
  *
  *
  * Prerequisites:
  *   - PHP 5.3 or later (namespaces support)
  *   - Using another session manager in parallel will probably cause trouble.
+ *   - For some functions, you need to include util.inc.
  *
  *
  * Usage:
- * class Session extends \Shy\Session
+ * class MySession extends \Shy\Session\AbstractSession
  * {
  *   // Prepare everything inside your constructor
  *   protected function __construct()
@@ -36,7 +36,7 @@ namespace Shy\Session;
  * }
  *
  * // Query the singleton instance via Late Static Bindings
- * $s = Session::get_instance();
+ * $s = MySession::get_instance();
  *
  * $s->end();     // end current session and delete session cookie
  * $s->purge();   // clear session contents and change session id
@@ -179,7 +179,7 @@ abstract class AbstractSession
 			if ($shy['IP'] != $_SERVER['REMOTE_ADDR']) {
 				// The address changed
 				$this->purge();
-				$this->messenger($this->t('ip_changed'), 'info');
+				$this->messages('Your IP address changed: Your session data has been purged.', 'info');
 			}
 		}
 
@@ -239,7 +239,7 @@ abstract class AbstractSession
 	public function redirect($to, $relative = true)
 	{
 		if ($relative) {
-			$to = resolve_href(current_url(), $to);
+			$to = \Shy\resolve_href(\Shy\current_url(), $to);
 		}
 
 		if ($this->has_messages() && !session_id()) {
