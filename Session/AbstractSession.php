@@ -129,10 +129,7 @@ abstract class AbstractSession
 	public static function get_instance()
 	{
 		static $instance = null;
-		if (!$instance) {
-			$instance = new static();
-		}
-		return $instance;
+		return $instance ?: $instance = new static();
 	}
 
 	/**
