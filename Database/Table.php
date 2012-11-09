@@ -110,4 +110,42 @@ class Table extends View
 
 		$row = new Row($this, array($this->pk_column => $id));
 	}
+
+	/**
+	 * Insert a new row into the table. Return its newly assigned primary key, or false.
+	 * @param array $row
+	 * @return integer|boolean
+	 */
+	public function insert(array $row)
+	{
+		$row  = array_map(array($this->db, 'escape_value'), $row);
+		$cols = array_map(array($this->db, 'escape_column'), array_keys($row));
+
+		$sql = 'INSERT INTO ' . $this->escaped_name . ' ('
+			. implode(', ', $cols) . ') VALUES (' . implode(', ', $row) . ')';
+
+		if ($this->db->execute($sql)) {
+			return mysqli_insert_id($this->db->connection());
+		}
+		return false;
+	}
+
+	/**
+	 * Update an existing row in the table. Will be identified by its primary key.
+	 * @param array $row
+	 * @return boolean
+	 */
+	public function update(array $row)
+	{
+		$sql = 'UPDATE ' . $this->escaped_name . ' SET ';
+		foreach ($row as $k => $v) {
+			if ($k != $this->pk_column) {
+				$sql .= $this->db->escape_column($k) . ' = ' . $this->db->escape_value($v) . ', ';
+			}
+		}
+		$sql = substr($sql, 0, -2) . ' WHERE ' . $this->db->escape_column($this->pk_column)
+			. ' = ' . $this->db->escape_value($data[$this->pk_column]) . ' LIMIT 1';
+
+		return $db->execute($sql);
+	}
 }
