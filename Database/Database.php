@@ -100,6 +100,15 @@ class Database
 	}
 
 	/**
+	 * Start a transaction.
+	 * @return Transaction
+	 */
+	public function start_transaction()
+	{
+		return new Transaction($this);
+	}
+
+	/**
 	 * Query the database.
 	 * @param string $query
 	 * @param array $params

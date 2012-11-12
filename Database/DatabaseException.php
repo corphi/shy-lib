@@ -5,7 +5,7 @@ namespace Shy\Database;
 
 
 /**
- * Exceptions raised by Database classes.
+ * Exception raised by Shy Database classes.
  * 
  * @author Philipp Cordes
  * @license GNU General Public License, version 3
