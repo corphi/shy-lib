@@ -124,12 +124,16 @@ abstract class AbstractSession
 	 * Singleton: Get the instance, create it if necessary.
 	 * (Late static bindings!)
 	 * @param boolean $force_start
-	 * @return Shy\Session
+	 * @return Shy\AbstractSession
 	 */
 	public static function get_instance()
 	{
 		static $instance = null;
-		return $instance ?: $instance = new static();
+		if ($instance) {
+			return $instance;
+		}
+		$instance = get_called_class();
+		return $instance = new $instance();
 	}
 
 	/**
@@ -289,6 +293,9 @@ abstract class AbstractSession
 	 */
 	public function messages($message = null, $class = 'warning')
 	{
+		if (!isset($this->messages)) {
+			$this->messages = new MessageCollection();
+		}
 		if ($message === null) {
 			return $this->messages;
 		}
