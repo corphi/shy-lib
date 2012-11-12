@@ -144,8 +144,8 @@ class Table extends View
 			}
 		}
 		$sql = substr($sql, 0, -2) . ' WHERE ' . $this->db->escape_column($this->pk_column)
-			. ' = ' . $this->db->escape_value($data[$this->pk_column]) . ' LIMIT 1';
+			. ' = ' . $this->db->escape_value($row[$this->pk_column]) . ' LIMIT 1';
 
-		return $db->execute($sql);
+		return $this->db->execute($sql);
 	}
 }
