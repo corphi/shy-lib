@@ -194,6 +194,12 @@ abstract class AbstractSession
 			$this->messages = unserialize($shy['MESSAGES']);
 		}
 
+		if (isset($shy['SHY'])) {
+			$_SESSION['SHY'] = $shy['SHY'];
+		} else {
+			unset($_SESSION['SHY']);
+		}
+
 		return true;
 	}
 
@@ -214,6 +220,10 @@ abstract class AbstractSession
 			$shy['POST'] = &$_POST;
 		}
 
+		if (isset($_SESSION['SHY'])) {
+			$shy['SHY'] = &$_SESSION['SHY'];
+		}
+
 		if (isset($shy) && $shy) {
 			$_SESSION['SHY'] = $shy;
 		}
@@ -225,10 +235,10 @@ abstract class AbstractSession
 	{
 		static $done = false;
 		if ($done) {
-			return;
+			return false;
 		}
 		register_shutdown_function(array($this, 'dispose'));
-		$done = true;
+		return $done = true;
 	}
 
 

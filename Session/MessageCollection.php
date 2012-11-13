@@ -46,6 +46,7 @@ class MessageCollection
 		foreach ($this->messages as $message) {
 			echo '<p class="' . $message[self::TYPE] . '">' . $message[self::TEXT] . '</p>';
 		}
+		$this->messages = array();
 	}
 
 	public function __sleep()
