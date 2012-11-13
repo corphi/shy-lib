@@ -125,7 +125,7 @@ class Table extends View
 			. implode(', ', $cols) . ') VALUES (' . implode(', ', $row) . ')';
 
 		if ($this->db->execute($sql)) {
-			return mysqli_insert_id($this->db->connection());
+			return mysqli_insert_id($this->db->connection()) ?: true;
 		}
 		return false;
 	}
