@@ -51,14 +51,12 @@ class Query
 	public function __toString()
 	{
 		if (!$this->limit) {
-			$sql = $this->query;
-		} elseif (!isset($this->limit['offset']) || !$this->limit['offset']) {
-			$sql = $this->query . ' LIMIT ' . $this->limit['limit'];
-			return $sql;
-		} else {
-			$sql = $this->query . " LIMIT {$this->limit['offset']}, {$this->limit['limit']}";
+			return $this->query;
 		}
-		return $sql;
+		if (!isset($this->limit['offset']) || !$this->limit['offset']) {
+			return $this->query . ' LIMIT ' . $this->limit['limit'];
+		}
+		return $this->query . ' LIMIT ' . $this->limit['offset'] . ', ' . $this->limit['limit'];
 	}
 
 	/**
@@ -255,13 +253,14 @@ class Query
 	}
 
 	/**
+	 * Define parameter values for the query.
 	 * FIXME: It’s a dirty hack. You have been warned.
 	 * @param array $params
 	 * @return Query
 	 */
 	public function set_params(array $params)
 	{
-		$db = $this->database();
+		$db = $this->db;
 		foreach ($params as $param => $value) {
 			$this->query = str_replace(':' . $param, $db->escape_value($value), $this->query);
 		}
