@@ -147,6 +147,7 @@ class Query
 			// Needs PHP 5.3
 			$arr = $rs->fetch_all(MYSQLI_ASSOC);
 		} else {
+			$arr = array();
 			while ($row = $rs->fetch_assoc()) {
 				$arr[] = $row;
 			}
