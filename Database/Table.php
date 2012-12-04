@@ -49,11 +49,9 @@ class Table extends View
 			return $arr;
 		};
 		$this->referenced_by = $db->query(
-			'SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME'
-			. ' FROM information_schema.KEY_COLUMN_USAGE'
-			. ' WHERE TABLE_SCHEMA = :database AND REFERENCED_TABLE_SCHEMA = :database'
-			. ' AND REFERENCED_TABLE_NAME = :table'
-		)->set_params($params)->fetch_custom($fetcher, MYSQLI_USE_RESULT);
+			'SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE'
+			. ' WHERE TABLE_SCHEMA = :database AND REFERENCED_TABLE_SCHEMA = :database AND REFERENCED_TABLE_NAME = :table',
+			$params)->fetch_custom($fetcher, MYSQLI_USE_RESULT);
 	}
 
 	public function fetch_tree($grpcol, $idcol = null)
@@ -91,7 +89,8 @@ class Table extends View
 			if (count($references) > 1) {
 				throw new DatabaseException(sprintf('Ambiguous refererences from table “%s” to “%s”', $table, $this->name));
 			}
-			$column = first(array_keys($references));
+			$column = array_keys($references);
+			$column = reset($column);
 		} elseif (!isset($references[$column])) {
 			throw new DatabaseException(sprintf('Column “%s” not found in table “%s”', $column, $this->name));
 		}
@@ -132,19 +131,24 @@ class Table extends View
 
 	/**
 	 * Update an existing row in the table. Will be identified by its primary key.
+	 * If you set it explicitly (second parameter), you can change its value.
 	 * @param array $row
+	 * @param integer $pk
 	 * @return boolean
 	 */
-	public function update(array $row)
+	public function update(array $row, $pk = null)
 	{
+		if ($pk === null) {
+			$pk = $row[$this->pk_column];
+			unset($row[$this->pk_column]);
+		}
+
 		$sql = 'UPDATE ' . $this->escaped_name . ' SET ';
 		foreach ($row as $k => $v) {
-			if ($k != $this->pk_column) {
-				$sql .= $this->db->escape_column($k) . ' = ' . $this->db->escape_value($v) . ', ';
-			}
+			$sql .= $this->db->escape_column($k) . ' = ' . $this->db->escape_value($v) . ', ';
 		}
 		$sql = substr($sql, 0, -2) . ' WHERE ' . $this->db->escape_column($this->pk_column)
-			. ' = ' . $this->db->escape_value($row[$this->pk_column]) . ' LIMIT 1';
+			. ' = ' . $this->db->escape_value($pk) . ' LIMIT 1';
 
 		return $this->db->execute($sql);
 	}
