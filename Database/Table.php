@@ -18,9 +18,8 @@ class Table extends View
 	/**
 	 * @param Database $db
 	 * @param string $name
-	 * @param boolean $load_references
 	 */
-	public function __construct(Database $db, $name, $load_references = false)
+	public function __construct(Database $db, $name)
 	{
 		parent::__construct($db, $name);
 

@@ -41,11 +41,10 @@ class Database
 	}
 
 	/**
-	 * Setup the database connection. Allows loading all tables from the database.
+	 * Set up the database connection.
 	 * @param array $credentials
-	 * @param boolean $load_tables
 	 */
-	public function __construct(array $credentials = array(), $load_tables = false)
+	public function __construct(array $credentials = array())
 	{
 		// These null values will be replaced with config defaults by \mysqli.
 		$credentials += array(
@@ -69,14 +68,7 @@ class Database
 		$conn->set_charset('utf8');
 		$this->conn = $conn;
 
-		$this->name = $credentials['database'];
-
-		if ($load_tables) {
-			$tables = $conn->query('SHOW TABLES')->fetch_all();
-			foreach ($tables as $table) {
-				$this->table($table[0]);
-			}
-		}
+		$this->name = $credentials['database'] ?: $this->query('SELECT DATABASE()')->fetch_value();
 	}
 
 	/**
@@ -107,6 +99,9 @@ class Database
 	 */
 	public function query($query, array $params = array())
 	{
+		if (!$params) {
+			return new Query($this, $query);
+		}
 		$q = new Query($this, $query);
 		return $q->set_params($params);
 	}
@@ -116,17 +111,17 @@ class Database
 	 */
 	protected $tables;
 	/**
-	 * Request a table from the database. Caches used tables.
+	 * Request a table or a view from the database. Caches used ones.
 	 * @param string $name
 	 * @param array $filter
-	 * @return Table
+	 * @return Table|View
 	 */
-	public function table($name, array $filter = array())
+	public function table($name)
 	{
 		if (!isset($this->tables[$name])) {
 			$this->tables[$name] = $this->read_table($name);
 		}
-		return $this->tables[$name]->filter($filter); 
+		return $this->tables[$name];
 	}
 	/**
 	 * Read table metadata from the database.
