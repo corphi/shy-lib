@@ -43,7 +43,7 @@ class Query
 	public function __construct(Database $db, $query)
 	{
 		$this->db = $db;
-		$this->query = $query;
+		$this->query = (string) $query;
 	}
 	/**
 	 * @return string

@@ -110,7 +110,7 @@ class Table extends View
 	}
 
 	/**
-	 * Insert a new row into the table. Return its newly assigned primary key, or false.
+	 * Insert a new row into the table. Return its newly assigned primary key, true or false.
 	 * @param array $row
 	 * @return integer|boolean
 	 */
