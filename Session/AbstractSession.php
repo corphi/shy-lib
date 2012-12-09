@@ -63,7 +63,7 @@ abstract class AbstractSession
 			return false;
 		}
 
-		if (is_null($path)) {
+		if ($path === null) {
 			$path = substr($_SERVER['PHP_SELF'], 0,
 				strrpos($_SERVER['PHP_SELF'], '/') + 1
 			);
@@ -124,16 +124,19 @@ abstract class AbstractSession
 	 * Singleton: Get the instance, create it if necessary.
 	 * (Late static bindings!)
 	 * @param boolean $force_start
-	 * @return Shy\AbstractSession
+	 * @return AbstractSession
 	 */
 	public static function get_instance()
 	{
 		static $instance = null;
-		if ($instance) {
-			return $instance;
+		if (!$instance) {
+			$instance = get_called_class();
+			if ($instance === 'Shy\\Session\\AbstractSession') {
+				throw new \RuntimeException('Shy\\Session\\AbstractSession::get_instance() must be called from a subclass first.');
+			}
+			$instance = new $instance();
 		}
-		$instance = get_called_class();
-		return $instance = new $instance();
+		return $instance;
 	}
 
 	/**
