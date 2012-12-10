@@ -34,7 +34,7 @@ h3. Table Abstraction
 It also features table abstraction that is directly read from the database. Read the product with primary key @12@ and its category from the database:
 
 bc. $product = $db->table('products')->by_id(12);
-$category = $product->references('categories')->fetch_row();
+$category = $db->table('categories')->referenced_by($product, 'products')->fetch_row();
 
 
 h2. Session

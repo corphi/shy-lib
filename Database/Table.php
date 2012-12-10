@@ -66,8 +66,9 @@ class Table extends View
 	 * @param array $subject
 	 * @param string $table
 	 * @param string $column
+	 * @throws DatabaseException
 	 */
-	public function references($subject, $table, $column = null)
+	public function references(array $subject, $table, $column = null)
 	{
 		return $this->db->table($table)->referenced_by($subject, $this->name, $column);
 	}
@@ -78,7 +79,7 @@ class Table extends View
 	 * @param string $column
 	 * @throws DatabaseException
 	 */
-	public function referenced_by($subject, $table, $column = null)
+	public function referenced_by(array $subject, $table, $column = null)
 	{
 		if (!isset($this->referenced_by[$table])) {
 			throw new DatabaseException(sprintf('Table “%s” not referenced from table “%s”', $this->name, $table));
