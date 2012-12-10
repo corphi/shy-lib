@@ -58,8 +58,8 @@ h2. Forms
 
 Use indexes to find input values inside @$_GET@ or @$_POST@:
 
-bc. $index = new \Shy\Forms\MultiIndex(array('person', 'name', 'first'));
-$index->lookup($_POST); // return $_POST['person']['name']['first'];
+bc. $index = new \Shy\Forms\NestedIndex(array('person', 'name', 'first'));
+$index->lookup($_POST); // returns $_POST['person']['name']['first'];
 
 
 h2. Miscellaneous
