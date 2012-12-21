@@ -5,47 +5,6 @@ namespace Shy;
 
 
 /**
- * Sucht einen Multi-Index aus einem Array heraus.
- * @param array $arr
- * @param mixed $index
- * @return mixed
- */
-function &reference_at(array $arr, $index)
-{
-	if (!is_array($index)) {
-		return $arr[$index];
-	}
-
-	do {
-		$arr = &$arr[array_pop($index)];
-	} while (!is_null($index));
-
-	return $arr;
-}
-/**
- * Durchsucht ein Array rekursiv nach einem Wert und liefert den mehrdimensionalen Index als Array zurück, oder false. Der zurückgegebene Index ist von innen nach außen sortiert.
- * @param array $haystack
- * @param mixed $needle
- * @return array
- */
-function array_find_recursive_strict(array &$haystack, $needle)
-{
-	foreach ($haystack as $k => &$v) {
-		if ($v === $needle) {
-			return array($k);
-		}
-		if (is_array($v)
-			&& $match = array_find_recursive_strict($v, $needle)
-		) {
-			$match[] = $k;
-			return $match;
-		}
-	}
-	return false;
-}
-
-
-/**
  * Return the type or the class name of the given parameter.
  * @param mixed $var
  * @return string
@@ -166,26 +125,10 @@ function implode_ids($ids)
 }
 
 /**
- * Abkürzung für Faule: htmlspecialchars.
- * @param string $str
- * @return string
- */
-function h($str)
-{
-	return htmlspecialchars($str);
-}
-/**
- * Encoding für Dummies: nl2br ∘ htmlspecialchars, für mehrzeilige Ausgaben.
- * @param string $str
- * @return string
- */
-function h2($str)
-{
-	return nl2br(htmlspecialchars($str));
-}
-
-/**
- * Liefert eine Position in einem Array zurück.
+ * Return a position from an array.
+ * @param array $arr
+ * @param string|integer $at
+ * @return mixed
  */
 function arr_at($arr, $at)
 {
@@ -193,7 +136,7 @@ function arr_at($arr, $at)
 }
 
 /**
- * Liefert '0' zurück, wenn der Parameter leer ist, sonst den Parameter.
+ * Return '0' if the parameter is empty; the parameter otherwise.
  * @param mixed $arg
  * @return mixed
  */
@@ -205,11 +148,11 @@ function zero_if_empty($arg)
 
 /**
  * Send an email encoded as UTF-8.
- * @param $to string
- * @param $subject string
- * @param $message string
- * @param $header string
- * @param $from string
+ * @param string $to
+ * @param string $subject
+ * @param string $message
+ * @param string $header
+ * @param string $from
  * @return boolean
  */
 function mail_utf8($to, $subject = '(No subject)', $message = '',
@@ -226,7 +169,7 @@ function mail_utf8($to, $subject = '(No subject)', $message = '',
 /**
  * Generiert ein neues, hinreichend zufällig aussehendes Kennwort.
  * Gleiche Startwerte liefern gleiche Kennwörter.
- * @param mixed $startwert
+ * @param string $startwert
  * @return string
  */
 function kennwort_generieren($startwert = null)
@@ -326,60 +269,6 @@ function data_uri_from_string($string, $mimetype = 'text/plain')
 	return 'data:' . $mimetype . ',' . urlencode($string);
 }
 
-
-if (!function_exists('http_response_code')) {
-	/**
-	 * Replacement for the PHP 5.4 function with the same name.
-	 * @param int $new_status
-	 * @return bool
-	 */
-	function http_response_code($new_status = null)
-	{
-		static $old_status = null;
-		if (is_null($old_status)) {
-			$old_status = isset($_SERVER['REDIRECT_STATUS'])
-			? (int) $_SERVER['REDIRECT_STATUS']
-			: 200;
-		}
-
-		if (is_null($new_status)) {
-			return $old_status;
-		}
-
-		static $desc = array(
-			100 => 'Continue', 'Switching Protocols',
-			200 => 'OK', 'Created', 'Accepted', 'Non-Authorative Information',
-				'No Content', 'Reset Content', 'Partial Content',
-			300 => 'Multiple Choices', 'Moved Permanently', 'Found',
-				'See Other', 'Not Modified', 'Use Proxy',
-				307 => 'Temporary Redirect',
-			400 => 'Bad Request', 'Unauthorized', 'Payment Required',
-				'Forbidden', 'Not Found', 'Method Not Allowed',
-				'Not Acceptable', 'Proxy Authentication Required',
-				'Request Timeout', 'Conflict', 'Gone', 'Length Required',
-				'Precondition Failed', 'Request Entity Too Large',
-				'Request-URI Too Long', 'Unsupported Media Type',
-				'Requested Range Not Satisfiable', 'Expectation Failed',
-			500 => 'Internal Server Error', 'Not Implemented', 'Bad Gateway',
-				'Service Unavailable', 'Gateway Timeout',
-				'HTTP Version Not Supported'
-		);
-
-		$new_status = (int) $new_status;
-		if (!isset($desc[$new_status])) {
-			return false;
-		}
-
-		if (isset($_SERVER['FCGI_ROLE'])) {
-			header('Status: ' . $new_status);
-		} else {
-			// Non-FastCGI flavour
-			header($_SERVER['SERVER_PROTOCOL'] . " $new_status " . $desc[$new_status]);
-		}
-		$old_status = $new_status;
-		return true;
-	}
-}
 
 /**
  * Read and cache a file via readfile().
