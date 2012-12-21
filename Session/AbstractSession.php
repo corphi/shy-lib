@@ -17,7 +17,7 @@ namespace Shy\Session;
  * Prerequisites:
  *   - PHP 5.3 or later (namespaces support)
  *   - Using another session manager in parallel will probably cause trouble.
- *   - For some functions, you need to include util.inc.
+ *   - For redirection, you need to include util.inc.
  *
  *
  * Usage:
@@ -131,8 +131,8 @@ abstract class AbstractSession
 		static $instance = null;
 		if (!$instance) {
 			$instance = get_called_class();
-			if ($instance === 'Shy\\Session\\AbstractSession') {
-				throw new \RuntimeException('Shy\\Session\\AbstractSession::get_instance() must be called from a subclass first.');
+			if ($instance === __CLASS__) {
+				throw new \RuntimeException(__CLASS__ . '::' . __METHOD__ . '() must be called from a subclass first.');
 			}
 			$instance = new $instance();
 		}
@@ -208,6 +208,7 @@ abstract class AbstractSession
 
 	/**
 	 * Clean up and store the session object’s settings.
+	 * Is called automatically when the script terminates.
 	 */
 	public function dispose()
 	{
@@ -233,6 +234,7 @@ abstract class AbstractSession
 	}
 	/**
 	 * Register dispose() for execution before the script terminates.
+	 * @return boolean
 	 */
 	private function register_dispose()
 	{
@@ -248,7 +250,7 @@ abstract class AbstractSession
 	/**
 	* Redirects to the given page. Will resolve relative urls (as needed for HTTP/1.1).
 	* @param string $to
-	* @param bool $relative
+	* @param boolean $relative
 	*/
 	public function redirect($to, $relative = true)
 	{
@@ -268,7 +270,7 @@ abstract class AbstractSession
 	/**
 	 * Ends the current session, deletes the existing session cookie. The
 	 * session must be started (i.e. picked up) for this to work.
-	 * @return bool
+	 * @return boolean
 	 */
 	public function end()
 	{
@@ -285,12 +287,11 @@ abstract class AbstractSession
 	}
 	/**
 	 * Deletes all session variables, generates an new session id.
-	 * @return void
+	 * @return boolean
 	 */
 	public function purge()
 	{
-		session_regenerate_id(true);
-		session_destroy();
+		return session_regenerate_id(true) && session_destroy();
 	}
 
 
@@ -324,7 +325,6 @@ abstract class AbstractSession
 	}
 	/**
 	 * Render the messages without creating the collection.
-	 * @return void
 	 */
 	public function render_messages()
 	{
@@ -359,7 +359,7 @@ abstract class AbstractSession
 	/**
 	 * Render the messages without creating the collection.
 	 * @param string $control
-	 * @return mixed
+	 * @return boolean
 	 */
 	public function render_form_error($control)
 	{
