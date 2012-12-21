@@ -45,9 +45,7 @@ class Query
 		$this->db = $db;
 		$this->query = (string) $query;
 	}
-	/**
-	 * @return string
-	 */
+
 	public function __toString()
 	{
 		if (!$this->limit) {
@@ -74,36 +72,38 @@ class Query
 	 */
 	protected static $custom_fetchers;
 	/**
-	 * Register a closure for fetching using an identifier.
-	 * @param string $fetcher
-	 * @param \Closure $c
+	 * Register a callable for fetching using an identifier.
+	 * @param string $name
+	 * @param callable $callback
 	 */
-	public static function register_fetcher($fetcher, \Closure $c)
+	public static function register_fetcher($name, $callback)
 	{
-		self::$custom_fetchers[$fetcher] = $c;
+		if (!is_callable($callback)) {
+			throw new \InvalidArgumentException('$callback is not callable.');
+		}
+		self::$custom_fetchers[$name] = $callback;
 	}
 	/**
-	 * Fetch the results from the Database and leave processing to a closure.
-	 * @param \Closure|string $fetcher
+	 * Fetch the results from the Database and leave processing to a callable.
+	 * @param string|callable $fetcher
 	 * @param integer $resultmode
 	 * @return mixed
 	 */
 	public function fetch_custom($fetcher, $resultmode = MYSQLI_STORE_RESULT)
 	{
-		if (is_string($fetcher)) {
+		if (is_string($fetcher) && isset(self::$custom_fetchers[$fetcher])) {
 			$fetcher = self::$custom_fetchers[$fetcher];
+		} elseif (!is_callable($fetcher)) {
+			throw new \InvalidArgumentException('$fetcher is neither callable nor a reigstered fetcher.');
 		}
-		if (!($fetcher instanceof \Closure)) {
-			throw new \InvalidArgumentException('$fetcher needs to be a Closure or a string identifier for a registered fetcher.');
-		}
-		return $fetcher($this->db->connection()->query($this, $resultmode));
+		return call_user_func($fetcher, $this->db->connection()->query($this, $resultmode));
 	}
 	/**
 	 * Returns the result as three-dimensional array; or false.
 	 * The array will be grouped by values from column $grpcol and can be indexed by values from column $idcol.
 	 * @param string $grpcol
 	 * @param string $idcol
-	 * @return mixed
+	 * @return array|false
 	 */
 	public function fetch_tree($grpcol, $idcol = null)
 	{
@@ -129,7 +129,7 @@ class Query
 	 * Returns the result of the given SQL command as two-dimensional array; or false.
 	 * The array can be indexed by values from column $idcol.
 	 * @param $idcol string
-	 * @return mixed
+	 * @return array|false
 	 */
 	public function fetch_array($idcol = null)
 	{
@@ -152,7 +152,6 @@ class Query
 				$arr[] = $row;
 			}
 		}
-
 		$rs->free();
 		return $arr;
 	}
@@ -161,7 +160,7 @@ class Query
 	 * The array can be indexed by values from the column $idcol.
 	 * @param $col string
 	 * @param $idcol string
-	 * @return array|boolean
+	 * @return array|false
 	 */
 	public function fetch_column($col = null, $idcol = null)
 	{
@@ -189,7 +188,7 @@ class Query
 	}
 	/**
 	 * Returns the first line from the result of the given SQL command as associative array; or false.
-	 * @return array|boolean
+	 * @return array|false
 	 */
 	public function fetch_row()
 	{
@@ -203,7 +202,7 @@ class Query
 	}
 	/**
 	 * Returns the value of the first field in the first row from the result of the given SQL command; or false.
-	 * @return string|boolean
+	 * @return string|false
 	 */
 	public function fetch_value()
 	{
@@ -220,6 +219,7 @@ class Query
 	 * Pagination.
 	 * @param integer $page
 	 * @param integer $per_page
+	 * @return self
 	 */
 	public function set_page($page = 1, $per_page = null)
 	{
@@ -232,6 +232,7 @@ class Query
 	 * Impose a limit on query results.
 	 * @param integer $limit
 	 * @param integer $offset
+	 * @return self
 	 */
 	public function set_limit($limit = null, $offset = 0)
 	{
@@ -257,7 +258,7 @@ class Query
 	 * Define parameter values for the query.
 	 * FIXME: It’s a dirty hack. You have been warned.
 	 * @param array $params
-	 * @return Query
+	 * @return self
 	 */
 	public function set_params(array $params)
 	{

@@ -100,6 +100,11 @@ class Table extends View
 		));
 	}
 
+	/**
+	 * Fetch a row by its primary key value.
+	 * @param integer $id
+	 * @return array|boolean
+	 */
 	public function by_id($id)
 	{
 		return $this->db

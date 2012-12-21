@@ -47,7 +47,7 @@ function array_find_recursive_strict(array &$haystack, $needle)
 
 /**
  * Return the type or the class name of the given parameter.
- * @param $var mixed
+ * @param mixed $var
  * @return string
  */
 function gettype_ex($var)
@@ -57,7 +57,7 @@ function gettype_ex($var)
 
 
 /**
- * Sendet die HTTP-Kopfdaten und die ggf. die XML-Deklaration.
+ * Send an HTTP header and the XML declaration if applicable.
  */
 function send_headers()
 {
@@ -72,20 +72,15 @@ function send_headers()
 
 
 /**
- * Prüft, ob es sich um eine gültige E-Mail-Adresse handelt.
- * @param $string string
+ * Check whether it’s a valid email address.
+ * @param string $string
  * @return bool
  */
 function is_valid_email($string)
 {
-	// Eigentlich keine echte Begrenzung, sie steht nur so in der Datenbank.
-	if (!is_string($string) || mb_strlen($string, 'UTF-8') >= 256) {
-		return false;
-	}
-
 	$atIndex = strrpos($string, '@');
 	if (is_bool($atIndex) && !$atIndex) {
-		return false; // kein @
+		return false; // no @
 	}
 
 	$domain = substr($string, $atIndex + 1);
@@ -125,10 +120,9 @@ function is_valid_email($string)
 		}
 	}
 
-	// Die Funktion gibt es unter Windows erst ab PHP 5.2
+	// Needs PHP 5.2 on Windows systems
 	if (function_exists('checkdnsrr')) {
 		if (!(checkdnsrr($domain, 'MX') || checkdnsrr($domain, 'A'))) {
-			// Im Offlinemodus unbedingt auskommentieren, da DNS-Einträge dann nicht abgefragt werden können
 			// domain not found in DNS
 			return false;
 		}
@@ -139,8 +133,8 @@ function is_valid_email($string)
 
 /**
  * Prüft, ob das Argument ausschließlich aus Ziffern besteht, also nichtnegative Ganzzahl ist.
- * @param $str mixed
- * @return bool
+ * @param mixed $str
+ * @return boolean
  */
 function ctype_digit_ex($str)
 {
@@ -149,7 +143,7 @@ function ctype_digit_ex($str)
 
 /**
  * Macht aus einem Ding einen csv-String mit positiven Ganzzahlen; oder false.
- * @param $ids mixed
+ * @param mixed $ids
  * @return string
  */
 function implode_ids($ids)
@@ -210,18 +204,19 @@ function zero_if_empty($arg)
 
 
 /**
- * Sendet eine E-Mail, die als UTF-8 kodiert ist.
+ * Send an email encoded as UTF-8.
  * @param $to string
  * @param $subject string
  * @param $message string
  * @param $header string
- * @return bool
+ * @param $from string
+ * @return boolean
  */
-function mail_utf8($to, $subject = '(Ohne Betreff)', $message = '',
+function mail_utf8($to, $subject = '(No subject)', $message = '',
 	$header = '', $from = null)
 {
 	if (is_null($from)) {
-		$from = 'Seitenweit-Katalog <katalog@seitenweit.pfadfinden.de>';
+		$from = 'webmaster@' . $_SERVER['SERVER_NAME'];
 	}
 	$header_ = "MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nFrom: $from";
 	return mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $message, $header_ . $header);
@@ -231,7 +226,7 @@ function mail_utf8($to, $subject = '(Ohne Betreff)', $message = '',
 /**
  * Generiert ein neues, hinreichend zufällig aussehendes Kennwort.
  * Gleiche Startwerte liefern gleiche Kennwörter.
- * @param $startwert mixed
+ * @param mixed $startwert
  * @return string
  */
 function kennwort_generieren($startwert = null)
@@ -245,7 +240,7 @@ function kennwort_generieren($startwert = null)
 
 /**
  * Determines the current url and returns it.
- * @param bool $host_only
+ * @param boolean $host_only
  * @return string
  */
 function current_url($host_only = false)
@@ -273,8 +268,8 @@ function current_url($host_only = false)
  *
  * Based on the buggy resolve_href() from http://php.net/realpath.
  * Can’t do paths that start with “//” (Windows shares).
- * @param $base string
- * @param $path string
+ * @param string $base
+ * @param string $path
  * @return string
  */
 function resolve_href($base, $href)
@@ -324,6 +319,7 @@ function resolve_href($base, $href)
  * Wraps a string into a data URI.
  * @param string $string
  * @param string $type
+ * @return string
  */
 function data_uri_from_string($string, $mimetype = 'text/plain')
 {
@@ -388,12 +384,12 @@ if (!function_exists('http_response_code')) {
 /**
  * Read and cache a file via readfile().
  *
- * It will be cached automaticallyCache it, read it from cache if it’s new or can’t be read.
+ * Cache it, read it from cache if it’s new or can’t be read.
  * Files should only be returned if they are sufficiently small.
  * @param string $url
  * @param string $extension
  * @param boolean $return
- * @return string|integer|boolean
+ * @return string|integer|false
  */
 function read_or_cache($url, $extension = null, $return = false)
 {
