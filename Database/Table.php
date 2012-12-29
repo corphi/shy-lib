@@ -103,7 +103,7 @@ class Table extends View
 	/**
 	 * Fetch a row by its primary key value.
 	 * @param integer $id
-	 * @return array|boolean
+	 * @return array|false
 	 */
 	public function by_id($id)
 	{

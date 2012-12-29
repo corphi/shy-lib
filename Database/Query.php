@@ -94,7 +94,7 @@ class Query
 		if (is_string($fetcher) && isset(self::$custom_fetchers[$fetcher])) {
 			$fetcher = self::$custom_fetchers[$fetcher];
 		} elseif (!is_callable($fetcher)) {
-			throw new \InvalidArgumentException('$fetcher is neither callable nor a reigstered fetcher.');
+			throw new \InvalidArgumentException(__CLASS__ . '::' . __METHOD__ . '(): $fetcher is neither callable nor a registered fetcher.');
 		}
 		return call_user_func($fetcher, $this->db->connection()->query($this, $resultmode));
 	}
