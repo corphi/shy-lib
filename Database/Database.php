@@ -167,7 +167,7 @@ class Database
 		if ($value === null) {
 			return 'NULL';
 		}
-		if (is_int($value) || is_float($value) || ctype_digit((string) $value)) {
+		if (is_int($value) || is_float($value) || $value instanceof Literal || ctype_digit((string) $value)) {
 			return (string) $value;
 		}
 		return "'" . $this->conn->escape_string($value) . "'";
