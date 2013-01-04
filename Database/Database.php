@@ -167,6 +167,9 @@ class Database
 		if ($value === null) {
 			return 'NULL';
 		}
+			if (is_array($value)) {
+			return '(' . implode(', ', array_map(array($this, 'escape_value'), $value)) . ')';
+		}
 		if (is_int($value) || is_float($value) || $value instanceof Literal || ctype_digit((string) $value)) {
 			return (string) $value;
 		}
