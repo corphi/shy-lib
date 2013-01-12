@@ -38,6 +38,32 @@ class View extends Query
 	}
 
 	/**
+	 * Generate a WHERE clause from the given array.
+	 * @param array $where
+	 * @return string
+	 */
+	protected function where(array $where = array())
+	{
+		foreach ($where as $column => $value) {
+			if (is_array($value)) {
+				if ($value) {
+					$where[$column] = $this->db->escape_column($column) . ' IN ' . $this->db->escape_value($value);
+				} else {
+					unset($where[$column]);
+				}
+			} elseif ($value === null) {
+				$where[$column] = $this->db->escape_column($column) . ' IS NULL';
+			} else {
+				$where[$column] = $this->db->escape_column($column) . ' = ' . $this->db->escape_value($value);
+			}
+		}
+		if (!$where) {
+			return '';
+		}
+		return ' WHERE ' . implode(' AND ', $where);
+	}
+
+	/**
 	 * Query the table using a filter (i.e. a WHERE clause).
 	 * @param array $where
 	 * @return Query
@@ -48,22 +74,7 @@ class View extends Query
 			// No filter. Why filter?
 			return $this;
 		}
-
-		$sql = $this->query;
-		foreach ($where as $column => $value) {
-			if (is_array($value)) {
-				if ($value) {
-					$where[$column] = $this->db->escape_column($column) . ' IN ' . $this->db->escape_value($value);
-				}
-			} elseif ($value === null) {
-				$where[$column] = $this->db->escape_column($column) . ' IS NULL';
-			} else {
-				$where[$column] = $this->db->escape_column($column) . ' = ' . $this->db->escape_value($value);
-			}
-		}
-		$sql .= ' WHERE ' . implode(' AND ', $where);
-
-		return $this->db->query($sql);
+		return $this->db->query($this->query . $this->where($where));
 	}
 
 	/**
