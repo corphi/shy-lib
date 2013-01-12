@@ -53,8 +53,7 @@ class View extends Query
 		foreach ($where as $column => $value) {
 			if (is_array($value)) {
 				if ($value) {
-					array_walk($value, array($this->db, 'escape_value'));
-					$where[$column] = $this->db->escape_column($column) . ' IN (' . implode(', ', $value) . ')';
+					$where[$column] = $this->db->escape_column($column) . ' IN ' . $this->db->escape_value($value);
 				}
 			} elseif ($value === null) {
 				$where[$column] = $this->db->escape_column($column) . ' IS NULL';
