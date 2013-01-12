@@ -157,4 +157,17 @@ class Table extends View
 
 		return $this->db->execute($sql);
 	}
+
+	/**
+	 * Remove rows from the table. Return the number of deleted rows; or false on error.
+	 * @param array $where
+	 * @return integer|false
+	 */
+	public function remove(array $where = array())
+	{
+		$sql = 'DELETE FROM ' . $this->escaped_name . $this->where($where);
+		return $this->database()->execute($sql)
+			? $this->database()->connection()->affected_rows
+			: false;
+	}
 }
