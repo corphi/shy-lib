@@ -11,8 +11,13 @@ namespace Shy\Database;
  */
 class Table extends View
 {
-	protected $columns;
+	/**
+	 * @var array
+	 */
 	protected $referenced_by;
+	/**
+	 * @var string
+	 */
 	protected $pk_column;
 
 	/**
@@ -27,30 +32,12 @@ class Table extends View
 			'database' => $db->name(),
 			'table' => $name,
 		);
-
 		$this->pk_column = $db
 			->query('SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE'
 				. ' WHERE TABLE_SCHEMA = :database AND TABLE_NAME = :table'
 				. " AND CONSTRAINT_NAME = 'PRIMARY'")
 			->set_params($params)
 			->fetch_value();
-
-
-		$fetcher = function (\mysqli_result $result) {
-			if (!$result) {
-				return array();
-			}
-			$arr = array();
-			while ($row = $result->fetch_assoc()) {
-				$arr[$row['TABLE_NAME']][$row['COLUMN_NAME']] = $row['REFERENCED_COLUMN_NAME'];
-			}
-			$result->free();
-			return $arr;
-		};
-		$this->referenced_by = $db->query(
-			'SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE'
-			. ' WHERE TABLE_SCHEMA = :database AND REFERENCED_TABLE_SCHEMA = :database AND REFERENCED_TABLE_NAME = :table',
-			$params)->fetch_custom($fetcher, MYSQLI_USE_RESULT);
 	}
 
 	public function fetch_tree($grpcol, $idcol = null)
@@ -81,6 +68,24 @@ class Table extends View
 	 */
 	public function referenced_by(array $subject, $table, $column = null)
 	{
+		if (!isset($this->referenced_by)) {
+			// Load references
+			$fetcher = function (\mysqli_result $result) {
+				if (!$result) {
+					return array();
+				}
+				$arr = array();
+				while ($row = $result->fetch_assoc()) {
+					$arr[$row['TABLE_NAME']][$row['COLUMN_NAME']] = $row['REFERENCED_COLUMN_NAME'];
+				}
+				$result->free();
+				return $arr;
+			};
+			$this->referenced_by = $db->query(
+				'SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE'
+				. ' WHERE TABLE_SCHEMA = :database AND REFERENCED_TABLE_SCHEMA = :database AND REFERENCED_TABLE_NAME = :table',
+				$params)->fetch_custom($fetcher, MYSQLI_USE_RESULT);
+		}
 		if (!isset($this->referenced_by[$table])) {
 			throw new DatabaseException(sprintf('Table “%s” not referenced from table “%s”', $this->name, $table));
 		}
@@ -111,8 +116,6 @@ class Table extends View
 			->query("SELECT * FROM " . $this->escaped_name . " WHERE " . $this->db->escape_column($this->pk_column) . " = :id")
 			->set_params(array('id' => $id))
 			->fetch_row();
-
-		$row = new Row($this, array($this->pk_column => $id));
 	}
 
 	/**
@@ -122,11 +125,10 @@ class Table extends View
 	 */
 	public function insert(array $row)
 	{
-		$row  = array_map(array($this->db, 'escape_value'), $row);
 		$cols = array_map(array($this->db, 'escape_column'), array_keys($row));
 
 		$sql = 'INSERT INTO ' . $this->escaped_name . ' ('
-			. implode(', ', $cols) . ') VALUES (' . implode(', ', $row) . ')';
+			. implode(', ', $cols) . ') VALUES ' . $this->db->escape_value($row);
 
 		if ($this->db->execute($sql)) {
 			return mysqli_insert_id($this->db->connection()) ?: true;
