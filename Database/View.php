@@ -12,6 +12,10 @@ namespace Shy\Database;
  */
 class View extends Query
 {
+	/**
+	 * @param Database $db
+	 * @param string $name
+	 */
 	public function __construct(Database $db, $name)
 	{
 		$this->name = $name;
@@ -64,7 +68,7 @@ class View extends Query
 	}
 
 	/**
-	 * Query the table using a filter (i.e. a WHERE clause).
+	 * Query the view using a WHERE clause.
 	 * @param array $where
 	 * @return Query
 	 */
@@ -78,7 +82,7 @@ class View extends Query
 	}
 
 	/**
-	 * Describe the table.
+	 * Describe the view.
 	 * @return array
 	 */
 	public function describe()
