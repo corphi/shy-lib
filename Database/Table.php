@@ -19,6 +19,14 @@ class Table extends View
 	 * @var string
 	 */
 	protected $pk_column;
+	/**
+	 * The name of the column containing the primary key.
+	 * @return string
+	 */
+	public function pk_column()
+	{
+		return $this->pk_column;
+	}
 
 	/**
 	 * @param Database $db
@@ -46,6 +54,15 @@ class Table extends View
 			$idcol = $this->pk_column;
 		}
 		return parent::fetch_tree($grpcol, $idcol);
+	}
+	/**
+	 * Return a single result as a Row object.
+	 * @return Row|null
+	 */
+	public function fetch_object()
+	{
+		$data = $this->fetch_row();
+		return $data ? new Row($this, $data) : null;
 	}
 
 	/**
