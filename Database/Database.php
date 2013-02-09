@@ -150,11 +150,15 @@ class Database
 
 	/**
 	 * Escape a table, column or database name for use as identifier.
-	 * @param string $column
+	 * Also handles arrays.
+	 * @param array|string $column
 	 * @return string
 	 */
 	public function escape_column($column)
 	{
+		if (is_array($column)) {
+			return '(' . implode(', ', array_map(array($this, 'escape_column'), $column)) . ')';
+		}
 		return '`' . str_replace('`', '``', $column) . '`';
 	}
 	/**
