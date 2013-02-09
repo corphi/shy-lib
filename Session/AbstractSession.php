@@ -123,8 +123,7 @@ abstract class AbstractSession
 	/**
 	 * Singleton: Get the instance, create it if necessary.
 	 * (Late static bindings!)
-	 * @param boolean $force_start
-	 * @return AbstractSession
+	 * @return self
 	 */
 	public static function get_instance()
 	{
