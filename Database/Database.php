@@ -2,6 +2,9 @@
 
 namespace Shy\Database;
 
+use Shy\Database\Metadata\Metadata;
+use Shy\Database\Metadata\LiveMetadata;
+
 
 
 /**
@@ -23,7 +26,7 @@ class Database
 	 * The connection to the database.
 	 * @return \mysqli
 	 */
-	public function connection()
+	public function get_connection()
 	{
 		return $this->conn;
 	}
@@ -33,18 +36,33 @@ class Database
 	 */
 	protected $name;
 	/**
+	 * Return the name of the selected database.
 	 * @return string
 	 */
-	public function name()
+	public function get_name()
 	{
 		return $this->name;
 	}
 
 	/**
-	 * Set up the database connection.
-	 * @param array $credentials
+	 * @var Metadata
 	 */
-	public function __construct(array $credentials = array())
+	protected $metadata;
+	/**
+	 * Return the metadata for the database.
+	 * @return Metadata
+	 */
+	public function get_metadata()
+	{
+		return $this->metadata;
+	}
+
+	/**
+	 * Set up the database connection. Uses LiveMetadata if none are given.
+	 * @param array $credentials
+	 * @param Metadata $metadata
+	 */
+	public function __construct(array $credentials = array(), Metadata $metadata = null)
 	{
 		// These null values will be replaced with config defaults by \mysqli.
 		$credentials += array(
@@ -69,6 +87,8 @@ class Database
 		$this->conn = $conn;
 
 		$this->name = $credentials['database'] ?: $this->query('SELECT DATABASE()')->fetch_value();
+
+		$this->metadata = $metadata ?: new LiveMetadata($this);
 	}
 
 	/**
@@ -79,16 +99,6 @@ class Database
 	public function execute($query)
 	{
 		return $this->conn->query($query);
-	}
-
-	/**
-	 * Prepare a statement.
-	 * @param string $query
-	 * @return \mysqli_stmt
-	 */
-	public function prepare($query)
-	{
-		return $this->conn->prepare($query);
 	}
 
 	/**
@@ -111,41 +121,21 @@ class Database
 	 */
 	protected $tables;
 	/**
-	 * Request a table or a view from the database. Caches used ones.
+	 * Request a table from the database. Caches used ones.
 	 * @param string $name
-	 * @param array $filter
-	 * @return Table|View
+	 * @return Table
+	 * @throws DatabaseException when the table doesn’t exist.
 	 */
-	public function table($name)
+	public function get_table($name)
 	{
-		if (!isset($this->tables[$name])) {
-			$this->tables[$name] = $this->read_table($name);
+		if (isset($this->tables[$name])) {
+			return $this->tables[$name];
 		}
-		return $this->tables[$name];
-	}
-	/**
-	 * Read table metadata from the database.
-	 * @param string $name
-	 * @param boolean $have_faith
-	 * @return Table|View
-	 */
-	protected function read_table($name, $have_faith = false)
-	{
-		if (!$have_faith) {
-			static $db_name = null;
-			if (!$db_name) {
-				$db_name = $this->escape_value($this->name);
-			}
-			$table_type = $this->query(
-				'SELECT TABLE_TYPE FROM information_schema.TABLES'
-				. " WHERE TABLE_SCHEMA = $db_name AND TABLE_NAME = " . $this->escape_value($name)
-			)->fetch_value();
-			if ($table_type !== 'BASE TABLE') {
-				// VIEW or SYSTEM VIEW
-				return new View($this, $name);
-			}
+		$metadata = $this->metadata->get_table_metadata($name);
+		if (!$metadata) {
+			throw new DatabaseException("There is no table “{$name}”.");
 		}
-		return new Table($this, $name);
+		return $this->tables[$name] = new Table($this, $name, $metadata);
 	}
 
 	/**
@@ -161,6 +151,7 @@ class Database
 		}
 		return '`' . str_replace('`', '``', $column) . '`';
 	}
+
 	/**
 	 * Escape a value for use with the database.
 	 * @param mixed $value

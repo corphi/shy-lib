@@ -22,27 +22,31 @@ class Query
 	/**
 	 * @return Database
 	 */
-	public function database()
+	public function get_database()
 	{
 		return $this->db;
 	}
+
 	/**
+	 * The SQL query.
 	 * @var string
 	 */
 	protected $query;
+
 	/**
+	 * Offset and limit for this query.
 	 * @var array
 	 */
 	protected $limit = array();
 
 	/**
 	 * Create a query for the given Database.
-	 * @param Database $db
+	 * @param Database $database
 	 * @param string $query
 	 */
-	public function __construct(Database $db, $query)
+	public function __construct(Database $database, $query)
 	{
-		$this->db = $db;
+		$this->db = $database;
 		$this->query = (string) $query;
 	}
 
@@ -79,7 +83,7 @@ class Query
 	public static function register_fetcher($name, $callback)
 	{
 		if (!is_callable($callback)) {
-			throw new \InvalidArgumentException('$callback is not callable.');
+			throw new \InvalidArgumentException(__CLASS__ . '::' . __METHOD__ . '(): $callback is not callable.');
 		}
 		self::$custom_fetchers[$name] = $callback;
 	}
@@ -96,7 +100,7 @@ class Query
 		} elseif (!is_callable($fetcher)) {
 			throw new \InvalidArgumentException(__CLASS__ . '::' . __METHOD__ . '(): $fetcher is neither callable nor a registered fetcher.');
 		}
-		return call_user_func($fetcher, $this->db->connection()->query($this, $resultmode));
+		return call_user_func($fetcher, $this->db->get_connection()->query($this, $resultmode));
 	}
 	/**
 	 * Returns the result as three-dimensional array; or false.
@@ -107,7 +111,7 @@ class Query
 	 */
 	public function fetch_tree($grpcol, $idcol = null)
 	{
-		$rs = $this->db->connection()->query($this, MYSQLI_USE_RESULT);
+		$rs = $this->db->get_connection()->query($this, MYSQLI_USE_RESULT);
 		if (!$rs) {
 			return false;
 		}
@@ -133,7 +137,7 @@ class Query
 	 */
 	public function fetch_array($idcol = null)
 	{
-		$rs = $this->db->connection()->query($this, MYSQLI_USE_RESULT);
+		$rs = $this->db->get_connection()->query($this, MYSQLI_USE_RESULT);
 		if (!$rs) {
 			return false;
 		}
@@ -164,7 +168,7 @@ class Query
 	 */
 	public function fetch_column($col = null, $idcol = null)
 	{
-		$rs = $this->db->connection()->query($this, MYSQLI_USE_RESULT);
+		$rs = $this->db->get_connection()->query($this, MYSQLI_USE_RESULT);
 		if (!$rs) {
 			return false;
 		}
@@ -193,7 +197,7 @@ class Query
 	public function fetch_row()
 	{
 		$this->set_limit(1);
-		$rs = $this->db->connection()->query($this, MYSQLI_USE_RESULT);
+		$rs = $this->db->get_connection()->query($this, MYSQLI_USE_RESULT);
 		if ($rs && $row = $rs->fetch_assoc()) {
 			$rs->free();
 			return $row;
@@ -207,7 +211,7 @@ class Query
 	public function fetch_value()
 	{
 		$this->set_limit(1);
-		$rs = $this->db->connection()->query($this, MYSQLI_USE_RESULT);
+		$rs = $this->db->get_connection()->query($this, MYSQLI_USE_RESULT);
 		if ($rs && $row = $rs->fetch_row()) {
 			$rs->free();
 			return $row[0];
@@ -228,6 +232,7 @@ class Query
 			($page - 1) * $per_page
 		);
 	}
+
 	/**
 	 * Impose a limit on query results.
 	 * @param integer $limit
@@ -262,9 +267,8 @@ class Query
 	 */
 	public function set_params(array $params)
 	{
-		$db = $this->db;
 		foreach ($params as $param => $value) {
-			$this->query = str_replace(':' . $param, $db->escape_value($value), $this->query);
+			$this->query = str_replace(':' . $param, $this->db->escape_value($value), $this->query);
 		}
 		return $this;
 	}

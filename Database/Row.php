@@ -33,11 +33,12 @@ class Row implements \ArrayAccess, \IteratorAggregate
 	}
 
 	/**
+	 * Return the primary key value of this row.
 	 * @return string
 	 */
 	public function get_id()
 	{
-		return $this->data[$this->table->pk_column()];
+		return $this->data[$this->table->get_metadata()->get_pk_column_name()];
 	}
 
 	/**
@@ -53,6 +54,7 @@ class Row implements \ArrayAccess, \IteratorAggregate
 		}
 		return $this->table->references($this->data, $table, $column);
 	}
+
 	/**
 	 * Get references from other tables.
 	 * @param Table|string $table
@@ -69,15 +71,16 @@ class Row implements \ArrayAccess, \IteratorAggregate
 
 
 	/**
-	 * Update a row using values from the given array.
+	 * Update a row using values from the given array. Will only send changes for existing indices.
 	 * @param array $new_data
 	 * @return boolean
 	 */
 	public function update(array $new_data)
 	{
+		$new_data = array_intersect_key($new_data, $this->data);
 		if ($this->table->update(
-				array_diff_key($new_data, $this->data),
-				$this->data[$this->table->pk_column()]
+				array_diff_assoc($new_data, $this->data),
+				$this->data[$this->table->get_metadata()->get_pk_column_name()]
 		)) {
 			$this->data = $new_data + $this->data;
 			return true;
@@ -87,6 +90,7 @@ class Row implements \ArrayAccess, \IteratorAggregate
 
 
 	/**
+	 * @param string $offset
 	 * @return boolean
 	 */
 	public function offsetExists($offset)
@@ -94,6 +98,7 @@ class Row implements \ArrayAccess, \IteratorAggregate
 		return isset($this->data[$offset]);
 	}
 	/**
+	 * @param string $offset
 	 * @return string
 	 */
 	public function offsetGet($offset)
@@ -113,6 +118,7 @@ class Row implements \ArrayAccess, \IteratorAggregate
 		$this->data[$offset] = $value;
 	}
 	/**
+	 * @param string $offset
 	 * @throws DatabaseException
 	 */
 	public function offsetUnset($offset)

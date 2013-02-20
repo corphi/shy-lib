@@ -2,67 +2,67 @@
 
 namespace Shy\Database;
 
+use Shy\Database\Metadata\TableMetadata;
+
 
 
 /**
- *
+ * A table in the database.
+ * 
  * @author Philipp Cordes
  * @license GNU General Public License, version 3
  */
-class Table extends View
+class Table extends TableQuery
 {
 	/**
 	 * @var array
 	 */
 	protected $referenced_by;
+
+	/**
+	 * @var TableMetadata
+	 */
+	protected $metadata;
+	/**
+	 * The table’s metadata.
+	 * @return TableMetadata
+	 */
+	public function get_metadata()
+	{
+		return $this->metadata;
+	}
+
 	/**
 	 * @var string
 	 */
-	protected $pk_column;
+	protected $name;
 	/**
-	 * The name of the column containing the primary key.
+	 * Return the name of the table.
 	 * @return string
 	 */
-	public function pk_column()
+	public function get_name()
 	{
-		return $this->pk_column;
+		return $this->name;
 	}
 
 	/**
 	 * @param Database $db
 	 * @param string $name
+	 * @param TableMetadata $metadata
 	 */
-	public function __construct(Database $db, $name)
+	public function __construct(Database $db, $name, TableMetadata $metadata = null)
 	{
-		parent::__construct($db, $name);
+		parent::__construct($this);
 
-		$params = array(
-			'database' => $db->name(),
-			'table' => $name,
-		);
-		$this->pk_column = $db
-			->query('SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE'
-				. ' WHERE TABLE_SCHEMA = :database AND TABLE_NAME = :table'
-				. " AND CONSTRAINT_NAME = 'PRIMARY'")
-			->set_params($params)
-			->fetch_value();
+		$this->metadata = $metadata ?: $db->get_metadata()->get_table_metadata($name);
 	}
 
 	public function fetch_tree($grpcol, $idcol = null)
 	{
-		if (!$idcol) {
-			$idcol = $this->pk_column;
+		if ($idcol === true) {
+			$idcol = $this->metadata->get_pk_column_name();
 		}
 		return parent::fetch_tree($grpcol, $idcol);
-	}
-	/**
-	 * Return a single result as a Row object.
-	 * @return Row|null
-	 */
-	public function fetch_object()
-	{
-		$data = $this->fetch_row();
-		return $data ? new Row($this, $data) : null;
 	}
 
 	/**
@@ -78,6 +78,7 @@ class Table extends View
 	}
 	/**
 	 * Read references to a row from other rows.
+	 * TODO: Move metadata to the metadata class.
 	 * @param array $subject
 	 * @param string $table
 	 * @param string $column
@@ -98,7 +99,7 @@ class Table extends View
 				$result->free();
 				return $arr;
 			};
-			$this->referenced_by = $db->query(
+			$this->referenced_by = $this->db->query(
 				'SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE'
 				. ' WHERE TABLE_SCHEMA = :database AND REFERENCED_TABLE_SCHEMA = :database AND REFERENCED_TABLE_NAME = :table',
 				$params)->fetch_custom($fetcher, MYSQLI_USE_RESULT);
@@ -117,7 +118,7 @@ class Table extends View
 			throw new DatabaseException(sprintf('Column “%s” not found in table “%s”', $column, $this->name));
 		}
 
-		return $this->db->table($table)->filter(array(
+		return $this->db->get_table($table)->filter(array(
 			$column => $subject[$references[$column]],
 		));
 	}
@@ -129,10 +130,7 @@ class Table extends View
 	 */
 	public function by_id($id)
 	{
-		return $this->db
-			->query("SELECT * FROM " . $this->escaped_name . " WHERE " . $this->db->escape_column($this->pk_column) . " = :id")
-			->set_params(array('id' => $id))
-			->fetch_row();
+		return $this->filter(array($this->get_metadata()->get_pk_column_name() => $id))->fetch_row();
 	}
 
 	/**
@@ -142,13 +140,14 @@ class Table extends View
 	 */
 	public function insert(array $row)
 	{
-		$cols = array_map(array($this->db, 'escape_column'), array_keys($row));
+		$empty_row = $this->metadata->get_empty_row();
+		$row = array_diff_assoc(array_intersect_key($row, $empty_row), $empty_row);
 
-		$sql = 'INSERT INTO ' . $this->escaped_name . ' ('
-			. implode(', ', $cols) . ') VALUES ' . $this->db->escape_value($row);
+		$sql = 'INSERT INTO ' . $this->db->escape_column($this->name) . ' ' . $this->db->escape_column(array_keys($row))
+			. ' VALUES ' . $this->db->escape_value($row);
 
 		if ($this->db->execute($sql)) {
-			return mysqli_insert_id($this->db->connection()) ?: true;
+			return mysqli_insert_id($this->db->get_connection()) ?: true;
 		}
 		return false;
 	}
@@ -163,11 +162,11 @@ class Table extends View
 	public function update(array $row, $pk = null)
 	{
 		if ($pk === null) {
-			$pk = $row[$this->pk_column];
-			unset($row[$this->pk_column]);
+			$pk = $row[$this->metadata->get_pk_column_name()];
+			unset($row[$this->metadata->get_pk_column_name()]);
 		}
 
-		$sql = 'UPDATE ' . $this->escaped_name . ' SET ';
+		$sql = 'UPDATE ' . $this->db->escape_column($this->name) . ' SET ';
 		foreach ($row as $k => $v) {
 			$sql .= $this->db->escape_column($k) . ' = ' . $this->db->escape_value($v) . ', ';
 		}
@@ -184,9 +183,23 @@ class Table extends View
 	 */
 	public function remove(array $where = array())
 	{
-		$sql = 'DELETE FROM ' . $this->escaped_name . $this->where($where);
-		return $this->database()->execute($sql)
-			? $this->database()->connection()->affected_rows
+		$sql = 'DELETE FROM ' . $this->db->escape_column($this->name) . $this->where($where);
+		return $this->db->execute($sql)
+			? $this->db->get_connection()->affected_rows
 			: false;
+	}
+
+	/**
+	 * Query the table using a WHERE clause.
+	 * @param array $where
+	 * @return TableQuery
+	 */
+	public function filter(array $where)
+	{
+		if (!$where) {
+			// No filter. Why filter?
+			return $this;
+		}
+		return new TableQuery($this, $where);
 	}
 }
