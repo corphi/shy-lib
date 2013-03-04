@@ -41,11 +41,11 @@ class LiveTableMetadata implements TableMetadata
 	public function describe()
 	{
 		return $this->db
-			->query('DESCRIBE TABLE ' . $this->db->escape_column($this->params['table']))
+			->query('DESCRIBE TABLE ' . $this->db->escape_column($this->params['tbl']))
 			->fetch_array();
 	}
 
-	public function get_pk_column_name($table_name)
+	public function get_pk_column_name()
 	{
 		return $this->db
 			->query("SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = :db AND TABLE_NAME = :tbl AND CONSTRAINT_NAME = 'PRIMARY'")
@@ -53,7 +53,7 @@ class LiveTableMetadata implements TableMetadata
 			->fetch_value();
 	}
 
-	public function get_empty_row($table_name)
+	public function get_empty_row()
 	{
 		return $this->db
 			->query('SELECT COLUMN_NAME, COLUMN_DEFAULT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = :db AND TABLE_NAME = :tbl ORDER BY ORDINAL_POSITION')
