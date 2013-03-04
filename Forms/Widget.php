@@ -72,9 +72,12 @@ class Widget
 	public function check()
 	{
 		$value = $this->get_value();
-		$this->failed_constraints = array_filter($this->constraints, function (Constraint $c) use ($value) {
-			return !$c->check_against($value);
-		});
+		$this->failed_constraints = array_filter(
+			$this->constraints,
+			function (Constraint $c) use ($value) {
+				return !$c->check_against($value);
+			}
+		);
 		return !$this->failed_constraints;
 	}
 
@@ -92,7 +95,7 @@ class Widget
 			return;
 		}
 		foreach ($this->failed_constraints as $constraint) {
-			echo '<p class="warning">' . $constraint->get_reason() . '</p>';
+			echo '<p class="warning">' . htmlspecialchars($constraint->get_reason()) . '</p>';
 		}
 	}
 }

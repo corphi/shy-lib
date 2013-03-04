@@ -21,10 +21,12 @@ class Form extends Widget implements \ArrayAccess
 	}
 
 	/**
+	 * The widgets belonging to this form.
 	 * @var array
 	 */
 	protected $widgets;
 	/**
+	 * Add a widget to this form.
 	 * @param Widget $widget
 	 * @return self
 	 */
@@ -37,7 +39,7 @@ class Form extends Widget implements \ArrayAccess
 
 	public function check()
 	{
-		$ok = true;
+		$ok = parent::check();
 		foreach ($this->widgets as $widget) {
 			if (!$widget->check()) {
 				$ok = false;
