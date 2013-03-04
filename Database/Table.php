@@ -46,15 +46,17 @@ class Table extends TableQuery
 	}
 
 	/**
-	 * @param Database $db
+	 * @param Database $database
 	 * @param string $name
 	 * @param TableMetadata $metadata
 	 */
-	public function __construct(Database $db, $name, TableMetadata $metadata = null)
+	public function __construct(Database $database, $name, TableMetadata $metadata = null)
 	{
+		$this->db = $database;
+		$this->query = 'SELECT * FROM ' . $database->escape_column($name);
 		parent::__construct($this);
 
-		$this->metadata = $metadata ?: $db->get_metadata()->get_table_metadata($name);
+		$this->metadata = $metadata ?: $database->get_metadata()->get_table_metadata($name);
 	}
 
 	public function fetch_tree($grpcol, $idcol = null)
@@ -201,5 +203,14 @@ class Table extends TableQuery
 			return $this;
 		}
 		return new TableQuery($this, $where);
+	}
+
+	public function __toString()
+	{
+		$str = parent::__toString();
+		if (!is_string($str)) {
+			return (string) $str;
+		}
+		return $str;
 	}
 }

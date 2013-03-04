@@ -49,12 +49,16 @@ class TableQuery extends Query
 	 */
 	public function __construct(Table $table, array $where = array())
 	{
+		$this->table = $table;
+
 		parent::__construct(
 			$table->get_database(),
-			(string) $table . $this->where($where)
+			(string) $table
 		);
 
-		$this->table = $table;
+		if ($where) {
+			$this->query .= $this->where($where);
+		}
 	}
 
 	/**
