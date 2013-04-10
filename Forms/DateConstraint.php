@@ -48,7 +48,7 @@ class DateConstraint implements Constraint
 					if ($range instanceof DateRange) {
 						$this->range = $range;
 					}
-					throw new \Exception(__CLASS__ . '::' . __METHOD__ . '(): $range is neither an allowed constant nor a DateRange.');
+					throw new \InvalidArgumentException(__CLASS__ . '::' . __METHOD__ . '(): $range is neither an allowed constant nor a DateRange.');
 			}
 		} else {
 			$this->range = null;
@@ -72,6 +72,6 @@ class DateConstraint implements Constraint
 
 	public function get_reason()
 	{
-		return 'That’s not a date.';
+		return $this->range ? 'That’s not a date or it’s not in the allowed range.' : 'That’s not a date.';
 	}
 }
