@@ -23,6 +23,7 @@ class Row implements \ArrayAccess, \IteratorAggregate
 	protected $data;
 
 	/**
+	 * Create a new row for the given table. The data isn’t checked at all - you have to do it yourself.
 	 * @param Table $table
 	 * @param array $data
 	 */

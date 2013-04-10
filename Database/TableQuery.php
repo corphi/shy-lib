@@ -44,6 +44,15 @@ class TableQuery extends Query
 	protected $table;
 
 	/**
+	 * The table this query fetches from.
+	 * @return Table
+	 */
+	public function get_table()
+	{
+		return $table;
+	}
+
+	/**
 	 * @param Table $table
 	 * @param array $where
 	 */

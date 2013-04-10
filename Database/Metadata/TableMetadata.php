@@ -29,4 +29,11 @@ interface TableMetadata
 	 * @return array
 	 */
 	function get_empty_row();
+
+	/**
+	 * Return which tables (and columns) reference this table (and column) as a two-dimensional array.
+	 * $array['table']['column'] = 'referenced_column'
+	 * @return array
+	 */
+	function get_referenced_by();
 }

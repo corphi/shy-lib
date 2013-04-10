@@ -80,7 +80,6 @@ class Table extends TableQuery
 	}
 	/**
 	 * Read references to a row from other rows.
-	 * TODO: Move metadata to the metadata class.
 	 * @param array $subject
 	 * @param string $table
 	 * @param string $column
@@ -88,28 +87,11 @@ class Table extends TableQuery
 	 */
 	public function referenced_by(array $subject, $table, $column = null)
 	{
-		if (!isset($this->referenced_by)) {
-			// Load references
-			$fetcher = function (\mysqli_result $result) {
-				if (!$result) {
-					return array();
-				}
-				$arr = array();
-				while ($row = $result->fetch_assoc()) {
-					$arr[$row['TABLE_NAME']][$row['COLUMN_NAME']] = $row['REFERENCED_COLUMN_NAME'];
-				}
-				$result->free();
-				return $arr;
-			};
-			$this->referenced_by = $this->db->query(
-				'SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE'
-				. ' WHERE TABLE_SCHEMA = :database AND REFERENCED_TABLE_SCHEMA = :database AND REFERENCED_TABLE_NAME = :table',
-				$params)->fetch_custom($fetcher, MYSQLI_USE_RESULT);
-		}
-		if (!isset($this->referenced_by[$table])) {
+		$referenced_by = $this->metadata->get_referenced_by();
+		if (!isset($referenced_by[$table])) {
 			throw new DatabaseException(sprintf('Table “%s” not referenced from table “%s”', $this->name, $table));
 		}
-		$references = $this->referenced_by[$table];
+		$references = $referenced_by[$table];
 		if (!$column) {
 			if (count($references) > 1) {
 				throw new DatabaseException(sprintf('Ambiguous refererences from table “%s” to “%s”', $table, $this->name));

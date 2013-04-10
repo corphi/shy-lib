@@ -25,7 +25,7 @@ class LiveTableMetadata implements TableMetadata
 	protected $params;
 
 	/**
-	 * Create a new instance for the given database and table name.
+	 * Create a new instance for the given database and table name. Every metadata is read on demand (and not cached).
 	 * @param Database $database
 	 * @param string $table_name
 	 */
@@ -59,5 +59,24 @@ class LiveTableMetadata implements TableMetadata
 			->query('SELECT COLUMN_NAME, COLUMN_DEFAULT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = :db AND TABLE_NAME = :tbl ORDER BY ORDINAL_POSITION')
 			->set_params($this->params)
 			->fetch_column('COLUMN_DEFAULT', 'COLUMN_NAME');
+	}
+
+	public function get_referenced_by()
+	{
+		$fetcher = function (\mysqli_result $result) {
+			if (!$result) {
+				return array();
+			}
+			$arr = array();
+			while ($row = $result->fetch_assoc()) {
+				$arr[$row['TABLE_NAME']][$row['COLUMN_NAME']] = $row['REFERENCED_COLUMN_NAME'];
+			}
+			$result->free();
+			return $arr;
+		};
+		return $this->db->query(
+			'SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE'
+			. ' WHERE TABLE_SCHEMA = :db AND REFERENCED_TABLE_SCHEMA = :db AND REFERENCED_TABLE_NAME = :tbl',
+			$this->params)->fetch_custom($fetcher, MYSQLI_USE_RESULT);
 	}
 }
